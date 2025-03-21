@@ -25,7 +25,7 @@ export default function InformacionScreen() {
 
   const fetchDestinoById = async (id: string) => {
     try {
-      const response = await fetch(`https://tu-api.com/api/destinos/${id}`);
+      const response = await fetch(`https://test-travell.azurewebsites.net/api/flights/${id}`);
       const data = await response.json();
       setVuelo(data);
     } catch (err) {
