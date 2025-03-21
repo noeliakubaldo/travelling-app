@@ -24,6 +24,10 @@ const Colors = {
     tabIconDefault: '#ccc',
     tabIconSelected: tintColorDark,
   },
+  primaryflightcard: "#538BCA",    
+  secondaryflightcard: "#F1F7FF",  
+  tertiaryflightcard: "#FFFFFF", 
 };
 
 export default Colors;
+
