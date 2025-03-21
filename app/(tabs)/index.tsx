@@ -1,31 +1,24 @@
-import { StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { View, Text, Button, StyleSheet } from 'react-native';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+export default function HomeScreen() {
+  const router = useRouter(); // Para manejar la navegación
 
-export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
+      <Text style={styles.title}>Bienvenido a la App de Viajes</Text>
+      <Text style={styles.subtitle}>Haz clic en el botón para ver la información de un vuelo.</Text>
+      <Button 
+        title="Ver Información del Vuelo"
+        onPress={() => router.push({ pathname: '/screens/InformacionScreen', params: { id: '1' } })}
+      />
     </View>
   );
 }
 
+// 🎨 Estilos de la pantalla
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, backgroundColor: '#fff' },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
+  subtitle: { fontSize: 16, color: 'gray', marginBottom: 20, textAlign: 'center' },
 });
