@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-import { COLORS } from "../constants/Colors";
+import Colors from "../constants/Colors";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 60) / 2;
@@ -64,7 +64,7 @@ export default function FlightCard({ flight, onPress }: FlightCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.tertiary,
+    backgroundColor: Colors.tertiaryflightcard,
     borderRadius: 10,
     overflow: "hidden",
     width: CARD_WIDTH,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   destinationText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: COLORS.primary,
+    color: Colors.primaryflightcard,
     marginBottom: 5,
   },
   originText: {
