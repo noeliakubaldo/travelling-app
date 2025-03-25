@@ -6,19 +6,19 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import FlightCard from "@/components/FlightCard";
 import Colors from "@/constants/Colors";
 
-
 export default function FlightsScreen() {
   const router = useRouter();
-  
+
   const [search, setSearch] = useState("");
-  const [flights, setFlights] = useState([]); 
-  const [loading, setLoading] = useState(false); 
-  const [error, setError] = useState(""); 
+  const [flights, setFlights] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const API_URL = "http://localhost:3000/api/flights";
 
@@ -47,7 +47,19 @@ export default function FlightsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Buscador de Vuelos</Text>
+      {/* Top bar con título y botones */}
+      <View style={styles.topBar}>
+        <Text style={styles.header}>Buscador de Vuelos</Text>
+        <View style={styles.authButtons}>
+          <TouchableOpacity onPress={() => router.push("/login")}>
+            <Text style={styles.loginButton}>Iniciar sesión</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/register')}>
+            <Text style={styles.registerButton}>Registrarse</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <TextInput
         style={styles.searchInput}
         placeholder="Buscar vuelos..."
@@ -55,6 +67,7 @@ export default function FlightsScreen() {
         value={search}
         onChangeText={setSearch}
       />
+
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primaryflightcard} />
       ) : error ? (
@@ -66,7 +79,7 @@ export default function FlightsScreen() {
           renderItem={({ item }) => (
             <FlightCard
               flight={item}
-              onPress={() =>  router.push(`../flight-details/${item.id}`)} // 👈 Navega a detalles
+              onPress={() => router.push(`../flight-details/${item.id}`)}
             />
           )}
           numColumns={2}
@@ -84,12 +97,38 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.secondaryflightcard,
     padding: 20,
   },
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   header: {
     fontSize: 24,
     fontWeight: "bold",
     color: Colors.primaryflightcard,
-    marginBottom: 10,
-    textAlign: "center",
+  },
+  authButtons: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  loginButton: {
+    backgroundColor: Colors.primaryflightcard,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    color: "#fff",
+    fontWeight: "600",
+  },
+  registerButton: {
+    borderWidth: 1,
+    borderColor: Colors.primaryflightcard,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    color: Colors.primaryflightcard,
+    fontWeight: "600",
+    marginLeft: 10,
   },
   searchInput: {
     backgroundColor: Colors.tertiaryflightcard,
