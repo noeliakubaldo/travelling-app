@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   View,
   Text,
@@ -6,11 +5,44 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router'; // 👈 Importación necesaria
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 
 export default function RegisterScreen() {
-  const router = useRouter(); // 👈 Inicializa el router
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleRegister = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Registro exitoso', 'Ahora puedes iniciar sesión');
+        router.push('/login');
+      } else {
+        Alert.alert('Error', data.error || 'No se pudo registrar');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Hubo un problema con el registro');
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -22,7 +54,9 @@ export default function RegisterScreen() {
         placeholder="Tu nombre"
         placeholderTextColor="#999"
         style={styles.input}
-        />
+        value={formData.name}
+        onChangeText={(text) => handleChange('name', text)}
+      />
 
       <Text style={styles.label}>Correo</Text>
       <TextInput
@@ -30,7 +64,9 @@ export default function RegisterScreen() {
         placeholderTextColor="#999"
         keyboardType="email-address"
         style={styles.input}
-        />
+        value={formData.email}
+        onChangeText={(text) => handleChange('email', text)}
+      />
 
       <Text style={styles.label}>Contraseña</Text>
       <TextInput
@@ -38,13 +74,15 @@ export default function RegisterScreen() {
         placeholderTextColor="#999"
         secureTextEntry
         style={styles.input}
-        />
-        
-      <TouchableOpacity style={styles.registerButton}>
+        value={formData.password}
+        onChangeText={(text) => handleChange('password', text)}
+      />
+
+      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
         <Text style={styles.registerButtonText}>Registrarse</Text>
       </TouchableOpacity>
 
-      <Text style={styles.or}>─  O  ─</Text>
+      <Text style={styles.or}>─ O ─</Text>
 
       <View style={styles.socialButtons}>
         <TouchableOpacity style={styles.socialBtn}><Text>G</Text></TouchableOpacity>
@@ -54,13 +92,12 @@ export default function RegisterScreen() {
       <Text style={styles.footerText}>
         ¿Ya tienes una cuenta?{' '}
         <Text style={styles.loginLink} onPress={() => router.push('/login')}>
-            Iniciar sesión
+          Iniciar sesión
         </Text>
-        </Text>
+      </Text>
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
     container: {
       flex: 1,
