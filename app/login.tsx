@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import CustomText from '@/components/CustomText';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -29,9 +30,9 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Iniciar sesión</Text>
-      <Text style={styles.subtitle}>Por favor, ingrese su cuenta</Text>
-      <Text style={styles.label}>Correo</Text>
+      <CustomText style={styles.title}>Iniciar sesión</CustomText>
+      <CustomText style={styles.subtitle}>Por favor, ingrese su cuenta</CustomText>
+      <CustomText style={styles.label}>Correo</CustomText>
       <TextInput
         placeholder="youremail@yahoo.com"
         placeholderTextColor="#999"
@@ -40,7 +41,7 @@ export default function LoginScreen() {
         value={email}
         onChangeText={setEmail}
       />
-      <Text style={styles.label}>Contraseña</Text>
+      <CustomText style={styles.label}>Contraseña</CustomText>
       <TextInput
         placeholder="********"
         placeholderTextColor="#999"
@@ -50,20 +51,20 @@ export default function LoginScreen() {
         onChangeText={setPassword}
       />
       <TouchableOpacity onPress={() => Alert.alert('Recuperación de contraseña')}>
-        <Text style={styles.forgot}>Olvidé la contraseña</Text>
+        <CustomText style={styles.forgot}>Olvidé la contraseña</CustomText>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Iniciar sesión</Text>
+        <CustomText style={styles.buttonText}>Iniciar sesión</CustomText>
       </TouchableOpacity>
-      <Text style={styles.or}>─  O  ─</Text>
+      <CustomText style={styles.or}>─  O  ─</CustomText>
       <View style={styles.socials}>
-        <TouchableOpacity style={styles.socialBtn}><Text>G</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.socialBtn}><Text>X</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.socialBtn}><CustomText>G</CustomText></TouchableOpacity>
+        <TouchableOpacity style={styles.socialBtn}><CustomText>X</CustomText></TouchableOpacity>
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
-        <Text style={styles.registerText}>¿No tienes una cuenta? </Text>
+        <CustomText style={styles.registerText}>¿No tienes una cuenta? </CustomText>
         <TouchableOpacity onPress={() => router.push('/register')}>
-          <Text style={styles.link}>Registrarse</Text>
+          <CustomText style={styles.link}>Registrarse</CustomText>
         </TouchableOpacity>
       </View>
     </View>

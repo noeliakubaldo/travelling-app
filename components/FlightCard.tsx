@@ -1,16 +1,13 @@
 import React from "react";
 import {
   View,
-  Text,
   Image,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
 } from "react-native";
 import Colors from "../constants/Colors";
-
-const { width } = Dimensions.get("window");
-const CARD_WIDTH = (width - 60) / 2;
+import CustomText from "@/components/CustomText";
 
 type Flight = {
   id: number;
@@ -39,24 +36,38 @@ type Flight = {
 type FlightCardProps = {
   flight: Flight;
   onPress: () => void;
+  width?: number;
 };
 
-export default function FlightCard({ flight, onPress }: FlightCardProps) {
+export default function FlightCard({ flight, onPress, width }: FlightCardProps) {
+  const { width: screenWidth } = Dimensions.get('window');
+  
+  const cardWidth = width || (screenWidth - 64) / 2;
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
+    <TouchableOpacity 
+      style={[
+        styles.card, 
+        { 
+          width: cardWidth, 
+          maxWidth: (screenWidth - 64) / 2 
+        }
+      ]} 
+      onPress={onPress}
+    >
       <Image
         source={{ uri: flight.image_url }}
         style={styles.cardImage}
         resizeMode="cover"
       />
       <View style={styles.cardContent}>
-        <Text style={styles.destinationText}>
+        <CustomText style={styles.destinationText} numberOfLines={1}>
           {flight.destinationAirport.city} - {flight.destinationAirport.country}
-        </Text>
-        <Text style={styles.originText}>
+        </CustomText>
+        <CustomText style={styles.originText} numberOfLines={1}>
           Partiendo desde {flight.departureAirport.city}
-        </Text>
-        <Text style={styles.priceText}>${flight.price} por persona</Text>
+        </CustomText>
+        <CustomText style={styles.priceText}>${flight.price} por persona</CustomText>
       </View>
     </TouchableOpacity>
   );
@@ -67,18 +78,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.tertiaryflightcard,
     borderRadius: 10,
     overflow: "hidden",
-    width: CARD_WIDTH,
-    // Sombra para iOS
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    // Elevación para Android
     elevation: 3,
   },
   cardImage: {
     width: "100%",
-    height: 100,
+    aspectRatio: 16 / 9,
   },
   cardContent: {
     padding: 10,
