@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
@@ -16,7 +17,9 @@ export default function LoginScreen() {
       });
 
       const data = await response.json();
+      
       if (response.ok) {
+        await AsyncStorage.setItem('authToken', data.token); // Guardar token
         Alert.alert('Inicio de sesión exitoso');
         router.push('/(tabs)/flights');
       } else {
@@ -82,14 +85,6 @@ const styles = StyleSheet.create({
   socialBtn: { backgroundColor: '#fff', borderRadius: 8, padding: 10, elevation: 2, marginHorizontal: 10 },
   registerText: { textAlign: 'center', color: '#444' },
   link: { fontWeight: 'bold', color: '#468cd1' },
-  subtitle: {
-    color: '#333',
-    marginBottom: 20,
-  },
-  label: {
-    marginTop: 10,
-    marginBottom: 4,
-    fontWeight: '600',
-    color: '#444',
-  },
+  subtitle: { color: '#333', marginBottom: 20 },
+  label: { marginTop: 10, marginBottom: 4, fontWeight: '600', color: '#444' },
 });
