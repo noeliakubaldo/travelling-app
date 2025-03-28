@@ -32,11 +32,14 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
     setIsBooking(true);
 
     try {
-      // Retrieve user ID from AsyncStorage
-      const userId = await AsyncStorage.getItem('user_id');
+      // Retrieve auth token from AsyncStorage
+      const token = await AsyncStorage.getItem('authToken');
 
-      // Check if user is logged in
-      if (!userId) {
+      // Check if user is logged in (has a valid token)
+      if (!token) {
+        // Log to console when user is not logged in
+        console.log('Usuario no logueado: No se puede realizar la reserva');
+
         Alert.alert(
           "Iniciar Sesión",
           "Debes iniciar sesión para realizar una reserva.",
@@ -57,17 +60,17 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
 
       // Prepare booking data
       const bookingData = {
-        userId: Number(userId),
-        flightId: flight.id,
-        passengerCount,
-        totalPrice: (flight.price || 0) * passengerCount
+        flight_id: flight.id,
+        passenger_count: passengerCount,
+        status: "pendiente"
       };
 
       // Send booking request to backend
-      const response = await fetch('http://localhost:3000/api/bookings', {
+      const response = await fetch('http://localhost:3000/api/reservations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Include the token in the request
         },
         body: JSON.stringify(bookingData)
       });
@@ -89,10 +92,10 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
         `Ruta: ${flight.departureAirport?.city} - ${flight.destinationAirport?.city}\n` +
         `Código de reserva: ${bookingResult.bookingId}`,
         [{ 
-          text: "Ver Reservas", 
+          text: "Ver Vuelos", 
           onPress: () => {
             // Use replace to avoid navigation stack issues
-            router.replace("/reservations");
+            router.replace("/flights");
           }
         }]
       );

@@ -50,6 +50,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="reservation"
+        options={{
+          title: 'Reservations',
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="face-agent" size={24} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
