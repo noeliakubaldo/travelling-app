@@ -1,51 +1,73 @@
-// app/login.tsx
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router'; // 👈 Importa useRouter
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import CustomText from '@/components/CustomText';
 
 export default function LoginScreen() {
-  const router = useRouter(); // 👈 Usa el router
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        await AsyncStorage.setItem('authToken', data.token); // Guardar token
+        Alert.alert('Inicio de sesión exitoso');
+        router.push('/(tabs)/flights');
+      } else {
+        Alert.alert('Error', data.error || 'Credenciales incorrectas');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Hubo un problema con el inicio de sesión');
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Iniciar sesión</Text>
-      <Text style={styles.subtitle}>Por favor, ingrese su cuenta</Text>
-
-            <Text style={styles.label}>Correo</Text>
-            <TextInput
-              placeholder="youremail@yahoo.com"
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              style={styles.input}
-            />
-            <Text style={styles.label}>Contraseña</Text>
-            <TextInput
-              placeholder="********"
-              placeholderTextColor="#999"
-              secureTextEntry
-              style={styles.input}
-            />
-
-      <TouchableOpacity>
-        <Text style={styles.forgot}>Olvidé la contraseña</Text>
+      <CustomText style={styles.title}>Iniciar sesión</CustomText>
+      <CustomText style={styles.subtitle}>Por favor, ingrese su cuenta</CustomText>
+      <CustomText style={styles.label}>Correo</CustomText>
+      <TextInput
+        placeholder="youremail@yahoo.com"
+        placeholderTextColor="#999"
+        keyboardType="email-address"
+        style={styles.input}
+        value={email}
+        onChangeText={setEmail}
+      />
+      <CustomText style={styles.label}>Contraseña</CustomText>
+      <TextInput
+        placeholder="********"
+        placeholderTextColor="#999"
+        secureTextEntry
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+      />
+      <TouchableOpacity onPress={() => Alert.alert('Recuperación de contraseña')}>
+        <CustomText style={styles.forgot}>Olvidé la contraseña</CustomText>
       </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Iniciar sesión</Text>
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <CustomText style={styles.buttonText}>Iniciar sesión</CustomText>
       </TouchableOpacity>
-
-      <Text style={styles.or}>─  O  ─</Text>
-
+      <CustomText style={styles.or}>─  O  ─</CustomText>
       <View style={styles.socials}>
-        <TouchableOpacity style={styles.socialBtn}><Text>G</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.socialBtn}><Text>X</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.socialBtn}><CustomText>G</CustomText></TouchableOpacity>
+        <TouchableOpacity style={styles.socialBtn}><CustomText>X</CustomText></TouchableOpacity>
       </View>
-
-      {/* 👇 Redirección a la pantalla de registro */}
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
-        <Text style={styles.registerText}>¿No tienes una cuenta? </Text>
+        <CustomText style={styles.registerText}>¿No tienes una cuenta? </CustomText>
         <TouchableOpacity onPress={() => router.push('/register')}>
-          <Text style={styles.link}>Registrarse</Text>
+          <CustomText style={styles.link}>Registrarse</CustomText>
         </TouchableOpacity>
       </View>
     </View>
@@ -64,14 +86,6 @@ const styles = StyleSheet.create({
   socialBtn: { backgroundColor: '#fff', borderRadius: 8, padding: 10, elevation: 2, marginHorizontal: 10 },
   registerText: { textAlign: 'center', color: '#444' },
   link: { fontWeight: 'bold', color: '#468cd1' },
-  subtitle: {
-    color: '#333',
-    marginBottom: 20,
-  },
-  label: {
-    marginTop: 10,
-    marginBottom: 4,
-    fontWeight: '600',
-    color: '#444',
-  },
+  subtitle: { color: '#333', marginBottom: 20 },
+  label: { marginTop: 10, marginBottom: 4, fontWeight: '600', color: '#444' },
 });
