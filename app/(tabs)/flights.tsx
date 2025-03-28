@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
-  Text,
   TextInput,
   FlatList,
   StyleSheet,
+  Dimensions,
   ActivityIndicator,
   TouchableOpacity,
+  Image,
+  SafeAreaView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import FlightCard from "@/components/FlightCard";
 import Colors from "@/constants/Colors";
+import CustomText from '@/components/CustomText';
 
 export default function FlightsScreen() {
   const router = useRouter();
@@ -19,8 +22,27 @@ export default function FlightsScreen() {
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
 
   const API_URL = "http://localhost:3000/api/flights";
+
+  const numColumns = useMemo(() => {
+    if (screenWidth < 600) return 2;
+    if (screenWidth < 900) return 3;
+    return 4;
+  }, [screenWidth]);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      setScreenWidth(Dimensions.get('window').width);
+    };
+
+    const dimensionHandler = Dimensions.addEventListener('change', updateWidth);
+
+    return () => {
+      dimensionHandler.remove();
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchFlights() {
@@ -40,54 +62,71 @@ export default function FlightsScreen() {
   }, []);
 
   const filteredFlights = flights.filter((flight: any) =>
-    flight.destinationAirport?.city
-      ?.toLowerCase()
-      .includes(search.toLowerCase())
+    flight.destinationAirport?.city?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const calculateCardWidth = () => {
+    const horizontalPadding = 32;
+    const spacing = 16;
+    return (screenWidth - horizontalPadding - (numColumns - 1) * spacing) / numColumns;
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Top bar con título y botones */}
-      <View style={styles.topBar}>
-        <Text style={styles.header}>Buscador de Vuelos</Text>
-        <View style={styles.authButtons}>
-          <TouchableOpacity onPress={() => router.push("/login")}>
-            <Text style={styles.loginButton}>Iniciar sesión</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/register')}>
-            <Text style={styles.registerButton}>Registrarse</Text>
-          </TouchableOpacity>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <Image 
+            source={require('@/assets/images/t-logo.png')} 
+            style={styles.logo} 
+          />
+          
+          <View style={styles.authContainer}>
+            <TouchableOpacity onPress={() => router.push("/login")}> 
+              <CustomText style={styles.loginButton}>Iniciar sesión</CustomText>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/register')}>
+              <CustomText style={styles.registerButton}>Registrarse</CustomText>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Buscar vuelos..."
-        placeholderTextColor="#999"
-        value={search}
-        onChangeText={setSearch}
-      />
+        <CustomText style={styles.header}>Buscador de Vuelos</CustomText>
 
-      {loading ? (
-        <ActivityIndicator size="large" color={Colors.primaryflightcard} />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : (
-        <FlatList
-          data={filteredFlights}
-          keyExtractor={(item: any) => item.id.toString()}
-          renderItem={({ item }) => (
-            <FlightCard
-              flight={item}
-              onPress={() => router.push(`../flight-details/${item.id}`)}
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar vuelos..."
+          placeholderTextColor="#999"
+          value={search}
+          onChangeText={setSearch}
+        />
+
+        <View style={{ flex: 1 }}>
+          {loading ? (
+            <ActivityIndicator size="large" color={Colors.primaryflightcard} />
+          ) : error ? (
+            <CustomText style={styles.errorText}>{error}</CustomText>
+          ) : (
+            <FlatList
+              key={`flatlist-${numColumns}`}
+              data={filteredFlights}
+              keyExtractor={(item: any) => item.id.toString()}
+              renderItem={({ item }) => (
+                <FlightCard
+                  flight={item}
+                  onPress={() => router.push(`../flight-details/${item.id}`)}
+                  width={calculateCardWidth()}
+                />
+              )}
+              numColumns={numColumns}
+              contentContainerStyle={styles.listContent}
+              columnWrapperStyle={styles.columnWrapper}
+              showsVerticalScrollIndicator={false}
+              removeClippedSubviews={true}
             />
           )}
-          numColumns={2}
-          contentContainerStyle={styles.listContent}
-          columnWrapperStyle={styles.columnWrapper}
-        />
-      )}
-    </View>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -95,28 +134,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.secondaryflightcard,
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
-  topBar: {
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.secondaryflightcard,
+  },
+  headerRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    justifyContent: "space-between",
+    marginBottom: 25,
   },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: Colors.primaryflightcard,
+  logo: {
+    width: 140,
+    height: 50,
+    resizeMode: "contain",
   },
-  authButtons: {
+  authContainer: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   loginButton: {
     backgroundColor: Colors.primaryflightcard,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 20,
     color: "#fff",
     fontWeight: "600",
   },
@@ -125,25 +170,33 @@ const styles = StyleSheet.create({
     borderColor: Colors.primaryflightcard,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 20,
     color: Colors.primaryflightcard,
     fontWeight: "600",
-    marginLeft: 10,
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: Colors.primaryflightcard,
+    marginBottom: 10,
+    textAlign: "left",
   },
   searchInput: {
     backgroundColor: Colors.tertiaryflightcard,
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: "#ccc",
     marginBottom: 20,
+    fontSize: 16,
   },
   listContent: {
     paddingBottom: 20,
   },
   columnWrapper: {
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     marginBottom: 20,
+    gap: 16,
   },
   errorText: {
     color: "red",

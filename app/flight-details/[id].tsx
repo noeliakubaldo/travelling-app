@@ -1,181 +1,122 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/Colors";
+import { Alert } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import FlightDetailCard from "../../components/FlightDetailCard";
+import BookingButton from "../../components/BookingButton"; // Importa el nuevo componente
 
 type Flight = {
   id: number;
-  airline: string;
-  departure_airport_id: number;
-  destination_airport_id: number;
-  departure_datetime: string;
-  arrival_datetime: string;
-  price: number;
-  image_url: string;
-  departureAirport: {
-    id: number;
-    name: string;
-    country: string;
-    city: string;
+  airline?: string;
+  departure_datetime?: string;
+  arrival_datetime?: string;
+  price?: number;
+  duration?: string;
+  image_url?: string;
+  departureAirport?: {
+    city?: string;
+    country?: string;
   };
-  destinationAirport: {
-    id: number;
-    name: string;
-    country: string;
-    city: string;
+  destinationAirport?: {
+    city?: string;
+    country?: string;
   };
-  duration: string;
 };
 
 export default function FlightDetailsScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
-  const [flight, setFlight] = useState<Flight | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  const BASE_URL = "http://localhost:3000/api/flights";
+  const [flight, setFlight] = useState<Flight | undefined>(undefined);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [passengerCount, setPassengerCount] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchFlight() {
+    async function fetchUserAndFlight() {
       try {
-        const response = await fetch(`${BASE_URL}/${id}`);
-        if (!response.ok) {
-          console.error("Error en la respuesta:", response.status);
-          setFlight(null);
-          return;
+        setIsLoading(true);
+        setError(null);
+        
+        // Fetch user ID
+        const storedUserId = await AsyncStorage.getItem("user_id");
+        setUserId(storedUserId ? Number(storedUserId) : null);
+
+        // Validate flightId
+        if (!id) {
+          throw new Error("No flight ID was provided. Cannot fetch flight details.");
         }
-        const data = await response.json();
-        setFlight(data);
+
+        // Fetch flight data
+        const response = await fetch(`http://localhost:3000/api/flights/${id}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const flightData: Flight = await response.json();
+        console.log("Flight Data from API:", flightData);
+        setFlight(flightData);
       } catch (error) {
-        console.error("Error fetching flight:", error);
-        setFlight(null);
+        console.error("Error fetching flight data:", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setError(errorMessage);
+        
+        Alert.alert(
+          "Error",
+          errorMessage || "No se pudo cargar la información del vuelo. Por favor, intente de nuevo.",
+          [{ text: "OK", onPress: () => router.back() }]
+        );
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
-    if (id) fetchFlight();
+
+    fetchUserAndFlight();
   }, [id]);
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const incrementPassengers = () => {
+    if (passengerCount < 10) {
+      setPassengerCount(prev => prev + 1);
+    } else {
+      Alert.alert(
+        "Límite de pasajeros",
+        "No se pueden seleccionar más de 10 pasajeros por reserva."
+      );
+    }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Cargando información...</Text>
-      </View>
-    );
-  }
-
-  if (!flight) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>No se encontró el vuelo.</Text>
-      </View>
-    );
-  }
+  const decrementPassengers = () => {
+    if (passengerCount > 1) {
+      setPassengerCount(prev => prev - 1);
+    }
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.card}>
-        <Image source={{ uri: flight.image_url }} style={styles.image} />
-        <View style={styles.overlay}>
-          <Text style={styles.title}>{flight.destinationAirport.city} - {flight.destinationAirport.country}</Text>
-          <Text style={styles.subtitle}>{flight.destinationAirport.name}</Text>
-        </View>
-        <View style={styles.iconsContainer}>
-          <TouchableOpacity>
-            <Ionicons name="chevron-back" size={24} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="heart-outline" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.detailsContainer}>
-        <Text style={styles.detailText}>✈️ {flight.airline}</Text>
-        <Text style={styles.detailText}>⏳ Duración: {flight.duration}</Text>
-        <Text style={styles.detailText}>💰 Precio: ${flight.price}</Text>
-      </View>
-    </ScrollView>
+    <>
+      <FlightDetailCard 
+        flight={flight}
+        isLoading={isLoading}
+        showPassengerControls={true}
+        passengerCount={passengerCount}
+        onIncrementPassengers={incrementPassengers}
+        onDecrementPassengers={decrementPassengers}
+      />
+      {flight && (
+        <BookingButton 
+          flight={flight}
+          passengerCount={passengerCount}
+          onBeforeBooking={() => {
+            // Opcional: Cualquier lógica antes de reservar
+            console.log('Iniciando reserva...');
+          }}
+          onBookingSuccess={(bookingId) => {
+            // Opcional: Hacer algo con el ID de reserva
+            console.log(`Reserva exitosa: ${bookingId}`);
+          }}
+        />
+      )}
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: Colors.background,
-  },
-  card: {
-    position: "relative",
-    borderRadius: 15,
-    overflow: "hidden",
-    elevation: 5,
-    marginBottom: 15,
-  },
-  image: {
-    width: "100%",
-    height: 250,
-  },
-  overlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 15,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "white",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "white",
-  },
-  iconsContainer: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    right: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  detailsContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    padding: 15,
-    elevation: 3,
-  },
-  detailText: {
-    fontSize: 16,
-    color: "#333",
-    marginBottom: 5,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: Colors.background,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 18,
-    color: Colors.primary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: Colors.background,
-  },
-  errorText: {
-    fontSize: 18,
-    color: Colors.danger,
-  },
-});
