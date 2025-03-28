@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   View,
   TextInput,
@@ -11,6 +11,8 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import FlightCard from "@/components/FlightCard";
 import Colors from "@/constants/Colors";
 import CustomText from '@/components/CustomText';
@@ -23,6 +25,7 @@ export default function FlightsScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);  // Estado para verificar si está logueado
 
   const API_URL = "http://localhost:3000/api/flights";
 
@@ -61,6 +64,28 @@ export default function FlightsScreen() {
     fetchFlights();
   }, []);
 
+  // Verifica si el usuario tiene token al montar
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const token = await AsyncStorage.getItem('authToken');
+      setIsLoggedIn(!!token);
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  // También se actualiza cuando la pantalla toma foco
+  useFocusEffect(
+    useCallback(() => {
+      const checkLoginStatus = async () => {
+        const token = await AsyncStorage.getItem('authToken');
+        setIsLoggedIn(!!token);
+      };
+
+      checkLoginStatus();
+    }, [])
+  );
+
   const filteredFlights = flights.filter((flight: any) =>
     flight.destinationAirport?.city?.toLowerCase().includes(search.toLowerCase())
   );
@@ -69,6 +94,13 @@ export default function FlightsScreen() {
     const horizontalPadding = 32;
     const spacing = 16;
     return (screenWidth - horizontalPadding - (numColumns - 1) * spacing) / numColumns;
+  };
+
+  // Función para cerrar sesión
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('authToken');
+    setIsLoggedIn(false);
+    router.push("/(tabs)/flights");
   };
 
   return (
@@ -81,12 +113,20 @@ export default function FlightsScreen() {
           />
           
           <View style={styles.authContainer}>
-            <TouchableOpacity onPress={() => router.push("/login")}> 
-              <CustomText style={styles.loginButton}>Iniciar sesión</CustomText>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <CustomText style={styles.registerButton}>Registrarse</CustomText>
-            </TouchableOpacity>
+            {isLoggedIn ? (
+              <TouchableOpacity onPress={handleLogout}>
+                <CustomText style={styles.logoutButton}>Cerrar sesión</CustomText>
+              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity onPress={() => router.push("/login")}> 
+                  <CustomText style={styles.loginButton}>Iniciar sesión</CustomText>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/register')}>
+                  <CustomText style={styles.registerButton}>Registrarse</CustomText>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 
@@ -166,6 +206,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   registerButton: {
+    borderWidth: 1,
+    borderColor: Colors.primaryflightcard,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    color: Colors.primaryflightcard,
+    fontWeight: "600",
+  },
+  logoutButton: {
     borderWidth: 1,
     borderColor: Colors.primaryflightcard,
     paddingVertical: 6,
