@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, SafeAreaView, ScrollView, StyleSheet, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import FlightDetailCard from "../../components/FlightDetailCard";
@@ -94,29 +94,40 @@ export default function FlightDetailsScreen() {
   };
 
   return (
-    <>
-      <FlightDetailCard 
-        flight={flight}
-        isLoading={isLoading}
-        showPassengerControls={true}
-        passengerCount={passengerCount}
-        onIncrementPassengers={incrementPassengers}
-        onDecrementPassengers={decrementPassengers}
-      />
-      {flight && (
-        <BookingButton 
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <FlightDetailCard 
           flight={flight}
+          isLoading={isLoading}
+          showPassengerControls={true}
           passengerCount={passengerCount}
-          onBeforeBooking={() => {
-            // Opcional: Cualquier lógica antes de reservar
-            console.log('Iniciando reserva...');
-          }}
-          onBookingSuccess={(bookingId) => {
-            // Opcional: Hacer algo con el ID de reserva
-            console.log(`Reserva exitosa: ${bookingId}`);
-          }}
+          onIncrementPassengers={incrementPassengers}
+          onDecrementPassengers={decrementPassengers}
         />
-      )}
-    </>
+        {flight && (
+          <BookingButton 
+            flight={flight}
+            passengerCount={passengerCount}
+            onBeforeBooking={() => {
+              console.log('Iniciando reserva...');
+            }}
+            onBookingSuccess={(bookingId) => {
+              console.log(`Reserva exitosa: ${bookingId}`);
+            }}
+          />
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f9ff',
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+});

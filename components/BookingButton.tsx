@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator, View, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors from '@/constants/Colors';
+
+const screenWidth = Dimensions.get('window').width;
 
 type BookingButtonProps = {
   flight: {
@@ -18,8 +20,8 @@ type BookingButtonProps = {
 };
 
 export const BookingButton: React.FC<BookingButtonProps> = ({
-  flight, 
-  passengerCount, 
+  flight,
+  passengerCount,
   onBeforeBooking,
   onBookingSuccess
 }) => {
@@ -27,17 +29,13 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
   const [isBooking, setIsBooking] = useState(false);
 
   const handleBookFlight = async () => {
-    // Optional pre-booking callback
     onBeforeBooking?.();
     setIsBooking(true);
 
     try {
-      // Retrieve auth token from AsyncStorage
       const token = await AsyncStorage.getItem('authToken');
 
-      // Check if user is logged in (has a valid token)
       if (!token) {
-        // Log to console when user is not logged in
         console.log('Usuario no logueado: No se puede realizar la reserva');
 
         Alert.alert(
@@ -45,11 +43,10 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
           "Debes iniciar sesión para realizar una reserva.",
           [
             { text: "Cancelar", style: "cancel", onPress: () => setIsBooking(false) },
-            { 
-              text: "Iniciar Sesión", 
+            {
+              text: "Iniciar Sesión",
               onPress: () => {
                 setIsBooking(false);
-                // Use replace to avoid navigation stack issues
                 router.replace("/login");
               }
             }
@@ -58,19 +55,17 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
         return;
       }
 
-      // Prepare booking data
       const bookingData = {
         flight_id: flight.id,
         passenger_count: passengerCount,
         status: "pendiente"
       };
 
-      // Send booking request to backend
       const response = await fetch('http://localhost:3000/api/reservations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Include the token in the request
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(bookingData)
       });
@@ -81,20 +76,17 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
 
       const bookingResult = await response.json();
 
-      // Optional success callback
       onBookingSuccess?.(bookingResult.bookingId);
 
-      // Show success alert with navigation
       Alert.alert(
-        "Reserva Exitosa", 
+        "Reserva Exitosa",
         `Tu reserva para ${passengerCount} pasajero(s) ha sido confirmada.\n` +
         `Vuelo: ${flight.airline}\n` +
         `Ruta: ${flight.departureAirport?.city} - ${flight.destinationAirport?.city}\n` +
         `Código de reserva: ${bookingResult.bookingId}`,
-        [{ 
-          text: "Ver Vuelos", 
+        [{
+          text: "Ver Vuelos",
           onPress: () => {
-            // Use replace to avoid navigation stack issues
             router.replace("/flights");
           }
         }]
@@ -111,34 +103,35 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
     }
   };
 
-  if (isBooking) {
-    return (
-      <TouchableOpacity 
-        style={styles.bookButton} 
-        disabled={true}
-      >
-        <ActivityIndicator color="white" />
-      </TouchableOpacity>
-    );
-  }
-
   return (
-    <TouchableOpacity 
-      style={styles.bookButton} 
-      onPress={handleBookFlight}
-    >
-      <Text style={styles.bookButtonText}>Reservar Vuelo</Text>
-    </TouchableOpacity>
+    <View style={styles.fullWidthContainer}>
+      <TouchableOpacity
+        style={styles.fullWidthButton}
+        onPress={handleBookFlight}
+        disabled={isBooking}
+      >
+        {isBooking ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text style={styles.bookButtonText}>Reservar Vuelo</Text>
+        )}
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  bookButton: {
+  fullWidthContainer: {
+    width: '100%',
+    marginTop: 15,
+    paddingHorizontal: 0,
+  },
+  fullWidthButton: {
+    width: '100%',
     backgroundColor: Colors.primaryflightcard,
-    padding: 15,
+    paddingVertical: 15,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 10,
   },
   bookButtonText: {
     color: 'white',
