@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -8,6 +9,15 @@ import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem('authToken');
+      setIsAuthenticated(!!token);
+    };
+    checkAuth();
+  }, []);
 
   return (
     <Tabs
@@ -19,9 +29,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{
-          href: null,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="flights"
@@ -50,15 +58,17 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="reservation"
-        options={{
-          title: 'Reservations',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="face-agent" size={24} color={color} />
-          ),
-        }}
-      />
+      {isAuthenticated && (
+        <Tabs.Screen
+          name="reservation"
+          options={{
+            title: 'Reservations',
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="calendar-check" size={24} color={color} />
+            ),
+          }}
+        />
+      )}
     </Tabs>
   );
 }
