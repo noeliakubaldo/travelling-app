@@ -4,8 +4,6 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors from '@/constants/Colors';
 
-const screenWidth = Dimensions.get('window').width;
-
 type BookingButtonProps = {
   flight: {
     id: number;
@@ -29,6 +27,7 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
   const [isBooking, setIsBooking] = useState(false);
 
   const handleBookFlight = async () => {
+    // Optional pre-booking callback
     onBeforeBooking?.();
     setIsBooking(true);
 

@@ -1,392 +1,119 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Image, Alert } from 'react-native';
-import { ReservationService } from '../src/services/reservationService'; // Ajusta la ruta según tu estructura
+import { View, Text, TouchableOpacity, Modal, TextInput, Button, Alert } from 'react-native';
+import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface Airport {
-  id: number;
-  name: string;
-}
 
-interface Flight {
-  id: number;
-  airline: string;
-  price: number;
-  departure_datetime: string;
-  arrival_datetime: string;
-  departureAirport: Airport;
-  destinationAirport: Airport;
-  image_url?: string;
-}
+const API_URL = 'http://localhost:3000/api/reservations';
 
-interface Reservation {
+type Reservation = {
   id: number;
-  user_id: number;
-  flight_id: number;
+  flight: {
+    airline: string;
+    departureAirport: { name: string };
+    destinationAirport: { name: string };
+  };
   reservation_date: string;
   passenger_count: number;
   total_price: number;
-  status: 'pendiente' | 'confirmado' | 'cancelado';
-  flight?: Flight;
-  duration?: string;
-}
+  status: string;
+};
 
-interface ReservationItemProps {
+type Props = {
   reservation: Reservation;
-  onUpdateReservation: (updatedReservation: Reservation) => void;
-  onDeleteReservation: (reservationId: number) => void;
-}
+  onUpdate: () => void;
+};
 
-const ReservationItem: React.FC<ReservationItemProps> = ({ 
-  reservation, 
-  onUpdateReservation,
-  onDeleteReservation
-}) => {
-  const [isEditModalVisible, setEditModalVisible] = useState(false);
-  const [editedPassengerCount, setEditedPassengerCount] = useState(reservation.passenger_count);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const handleConfirmPayment = async () => {
+const ReservationItem: React.FC<Props> = ({ reservation, onUpdate }) => {
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState<boolean>(false);
+  const [passengerCount, setPassengerCount] = useState<string>(reservation.passenger_count.toString());
+  
+  const updateReservation = async () => {
     try {
-      setIsLoading(true);
-      const confirmedReservation = await ReservationService.confirmReservation(reservation.id);
-      onUpdateReservation(confirmedReservation);
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch(`${API_URL}/${reservation.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ passenger_count: Number(passengerCount) }),
+      });
+
+      if (!response.ok) throw new Error('Error al actualizar la reserva');
+
+      Alert.alert('Éxito', 'Reserva actualizada correctamente');
+      onUpdate();  // Refresca la lista
+      setModalVisible(false);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo confirmar la reservación');
-    } finally {
-      setIsLoading(false);
+      Alert.alert('Error', 'No se pudo actualizar la reserva');
     }
   };
 
-  const handleDelete = async () => {
-    Alert.alert(
-      'Confirmar Eliminación',
-      '¿Estás seguro de que quieres cancelar esta reservación?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              await ReservationService.deleteReservation(reservation.id);
-              onDeleteReservation(reservation.id);
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar la reservación');
-            } finally {
-              setIsLoading(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleEditSubmit = async () => {
+  const deleteReservation = async () => {
     try {
-      setIsLoading(true);
-      const updatedReservation = await ReservationService.updateReservation(reservation.id, {
-        passenger_count: editedPassengerCount
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch(`${API_URL}/${reservation.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
       });
-      onUpdateReservation(updatedReservation);
-      setEditModalVisible(false);
+
+      if (!response.ok) throw new Error('Error al eliminar la reserva');
+
+      Alert.alert('Éxito', 'Reserva eliminada correctamente');
+      onUpdate();  // Refresca la lista
+      setConfirmModalVisible(false);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo actualizar la reservación');
-    } finally {
-      setIsLoading(false);
+      Alert.alert('Error', 'No se pudo eliminar la reserva');
     }
   };
 
   return (
-    <View style={styles.container}>
-      {reservation.flight?.image_url && (
-        <Image 
-          source={{ uri: reservation.flight.image_url }} 
-          style={styles.flightImage}
-          resizeMode="cover"
-        />
-      )}
-      
-      <View style={styles.reservationInfo}>
-        <Text style={styles.title}>
-          {reservation.flight?.airline}
-        </Text>
-        <View style={styles.routeContainer}>
-          <Text style={styles.airportCode}>
-            {reservation.flight?.departureAirport?.name || 'N/A'}
-          </Text>
-          <Text style={styles.routeArrow}>→</Text>
-          <Text style={styles.airportCode}>
-            {reservation.flight?.destinationAirport?.name || 'N/A'}
-          </Text>
+    <View style={{ padding: 10, borderBottomWidth: 1, borderColor: '#ccc' }}>
+      <Text style={{ fontWeight: 'bold' }}>Vuelo: {reservation.flight.airline}</Text>
+      <Text>Salida: {reservation.flight.departureAirport.name}</Text>
+      <Text>Destino: {reservation.flight.destinationAirport.name}</Text>
+      <Text>Fecha: {new Date(reservation.reservation_date).toLocaleDateString()}</Text>
+      <Text>Pasajeros: {reservation.passenger_count}</Text>
+      <Text>Total: ${reservation.total_price}</Text>
+      <Text>Estado: {reservation.status}</Text>
+
+      {/* Botón para Editar */}
+      <TouchableOpacity onPress={() => setModalVisible(true)} style={{ backgroundColor: 'blue', padding: 5, marginTop: 5 }}>
+        <Text style={{ color: 'white' }}>Editar</Text>
+      </TouchableOpacity>
+
+      {/* Botón para Eliminar (abre modal de confirmación) */}
+      <TouchableOpacity onPress={() => setConfirmModalVisible(true)} style={{ backgroundColor: 'red', padding: 5, marginTop: 5 }}>
+        <Text style={{ color: 'white' }}>Eliminar</Text>
+      </TouchableOpacity>
+
+      {/* Modal para Editar */}
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: 300 }}>
+            <Text>Editar número de pasajeros</Text>
+            <TextInput 
+              value={passengerCount} 
+              onChangeText={setPassengerCount} 
+              keyboardType="numeric" 
+              style={{ borderWidth: 1, padding: 5, marginTop: 10 }}
+            />
+            <Button title="Guardar" onPress={updateReservation} />
+            <Button title="Cancelar" onPress={() => setModalVisible(false)} color="gray" />
+          </View>
         </View>
-        
-        <Text style={styles.detailText}>
-          Salida: {formatDate(reservation.flight?.departure_datetime || new Date().toISOString())}
-        </Text>
-        <Text style={styles.detailText}>
-          Llegada: {formatDate(reservation.flight?.arrival_datetime || new Date().toISOString())}
-        </Text>
-        
-        <View style={styles.summaryContainer}>
-          <Text style={styles.detailText}>Pasajeros: {reservation.passenger_count}</Text>
-          <Text style={styles.detailText}>
-            Precio Total: ${(reservation.total_price || 0).toFixed(2)}
-          </Text>
-          <Text style={[
-            styles.statusText, 
-            reservation.status === 'confirmado' ? styles.confirmedStatus : 
-            reservation.status === 'cancelado' ? styles.canceledStatus : 
-            styles.pendingStatus
-          ]}>
-            {reservation.status.toUpperCase()}
-          </Text>
-        </View>
-      </View>
+      </Modal>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.editButton} 
-          onPress={() => setEditModalVisible(true)}
-          disabled={isLoading}
-        >
-          <Text style={styles.buttonText}>Editar</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.deleteButton} 
-          onPress={handleDelete}
-          disabled={isLoading}
-        >
-          <Text style={styles.buttonText}>Eliminar</Text>
-        </TouchableOpacity>
-        
-        {reservation.status !== 'confirmado' && (
-          <TouchableOpacity 
-            style={styles.payButton} 
-            onPress={handleConfirmPayment}
-            disabled={isLoading}
-          >
-            <Text style={styles.buttonText}>Pagar</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <Modal
-        visible={isEditModalVisible}
-        transparent={true}
-        animationType="slide"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Editar Reservación</Text>
-            <Text style={styles.modalSubtitle}>
-              {reservation.flight?.airline} - {reservation.flight?.departureAirport?.name} → {reservation.flight?.destinationAirport?.name}
-            </Text>
-            
-            <View style={styles.passengerEditContainer}>
-              <TouchableOpacity 
-                style={styles.passengerButton}
-                onPress={() => setEditedPassengerCount(Math.max(1, editedPassengerCount - 1))}
-                disabled={isLoading}
-              >
-                <Text style={styles.passengerButtonText}>-</Text>
-              </TouchableOpacity>
-              <Text style={styles.passengerCountText}>{editedPassengerCount}</Text>
-              <TouchableOpacity 
-                style={styles.passengerButton}
-                onPress={() => setEditedPassengerCount(editedPassengerCount + 1)}
-                disabled={isLoading}
-              >
-                <Text style={styles.passengerButtonText}>+</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity 
-                style={styles.modalCancelButton} 
-                onPress={() => setEditModalVisible(false)}
-                disabled={isLoading}
-              >
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.modalSaveButton} 
-                onPress={handleEditSubmit}
-                disabled={isLoading}
-              >
-                <Text style={styles.buttonText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
+      {/* Modal de Confirmación para Eliminar */}
+      <Modal visible={confirmModalVisible} animationType="slide" transparent>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: 300 }}>
+            <Text style={{ marginBottom: 10 }}>¿Estás seguro de que quieres eliminar esta reserva?</Text>
+            <Button title="Sí, eliminar" onPress={deleteReservation} color="red" />
+            <Button title="Cancelar" onPress={() => setConfirmModalVisible(false)} color="gray" />
           </View>
         </View>
       </Modal>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    marginVertical: 10,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  flightImage: {
-    width: '100%',
-    height: 150,
-  },
-  reservationInfo: {
-    padding: 15,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  routeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  airportCode: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#666',
-  },
-  routeArrow: {
-    marginHorizontal: 10,
-    fontSize: 16,
-    color: '#999',
-  },
-  detailText: {
-    color: '#666',
-    marginBottom: 5,
-  },
-  summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  statusText: {
-    fontWeight: 'bold',
-  },
-  confirmedStatus: {
-    color: 'green',
-  },
-  canceledStatus: {
-    color: 'red',
-  },
-  pendingStatus: {
-    color: 'orange',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    padding: 10,
-  },
-  editButton: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginRight: 5,
-  },
-  deleteButton: {
-    backgroundColor: '#F44336',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginRight: 5,
-  },
-  payButton: {
-    backgroundColor: '#2196F3',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  modalSubtitle: {
-    textAlign: 'center',
-    color: '#666',
-    marginBottom: 15,
-  },
-  passengerEditContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  passengerButton: {
-    backgroundColor: '#2196F3',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  passengerButtonText: {
-    color: 'white',
-    fontSize: 24,
-  },
-  passengerCountText: {
-    fontSize: 20,
-    marginHorizontal: 20,
-  },
-  modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalCancelButton: {
-    backgroundColor: '#F44336',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginRight: 10,
-  },
-  modalSaveButton: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-  },
-});
-
 
 export default ReservationItem;

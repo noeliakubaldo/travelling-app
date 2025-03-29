@@ -40,8 +40,8 @@ type FlightDetailCardProps = {
   onDecrementPassengers?: () => void;
 };
 
-export default function FlightDetailCard({
-  flight,
+export default function FlightDetailCard({ 
+  flight, 
   isLoading = false,
   showPassengerControls = false,
   passengerCount = 1,

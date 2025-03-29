@@ -1,21 +1,23 @@
-import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, useColorScheme } from 'react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Importar pantallas
 import FlightsScreen from '@/app/(tabs)/flights';
 import StatsScreen from '@/app/(tabs)/stats';
 import ChatbotScreen from '@/app/(tabs)/chatbot';
+import ReservationScreen from '@/app/(tabs)/reservation';
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
-// 🔹 Componente para el botón del menú lateral
+// 🔹 Componente del botón de menú en el header
 function CustomHeader() {
   const navigation = useNavigation();
-
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 15 }}>
       <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
@@ -25,8 +27,30 @@ function CustomHeader() {
   );
 }
 
-// 🔽 Definimos las pestañas inferiores
-function BottomTabs() {
+// 🔹 Pantalla principal con autenticación y Drawer Navigation
+export default function Layout() {
+  const colorScheme = useColorScheme();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem('authToken');
+      setIsAuthenticated(!!token);
+    };
+    checkAuth();
+  }, []);
+
+  return (
+    <Drawer.Navigator>
+      <Drawer.Screen name="Home" options={{ headerShown: false }}>
+        {() => <BottomTabs isAuthenticated={isAuthenticated} />}
+      </Drawer.Screen>
+    </Drawer.Navigator>
+  );
+}
+
+// 🔽 Configuración de las pestañas inferiores
+function BottomTabs({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -39,6 +63,7 @@ function BottomTabs() {
         name="Flights"
         component={FlightsScreen}
         options={{
+          title: 'Inicio',
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="airplane" size={24} color={color} />
           ),
@@ -62,25 +87,18 @@ function BottomTabs() {
           ),
         }}
       />
+      {isAuthenticated && (
+        <Tab.Screen
+          name="Reservation"
+          component={ReservationScreen}
+          options={{
+            title: 'Reservas',
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="calendar-check" size={24} color={color} />
+            ),
+          }}
+        />
+      )}
     </Tab.Navigator>
-  );
-}
-
-// 🔽 Definimos el Drawer con la navegación lateral
-export default function Layout() {
-  return (
-    <Drawer.Navigator
-      screenOptions={{
-        headerLeft: () => <CustomHeader />, // Agrega el botón del menú en el header
-      }}
-    >
-      {/* Pantalla principal con Bottom Tabs dentro del Drawer */}
-      <Drawer.Screen name="Home" component={BottomTabs} options={{ title: 'Inicio' }} />
-
-      {/* Opcionalmente, puedes agregar accesos directos en el Drawer */}
-      <Drawer.Screen name="Flights" component={FlightsScreen} options={{ title: 'Vuelos' }} />
-      <Drawer.Screen name="Stats" component={StatsScreen} options={{ title: 'Estadísticas' }} />
-      <Drawer.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'Chatbot' }} />
-    </Drawer.Navigator>
   );
 }
