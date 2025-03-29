@@ -117,7 +117,6 @@ export default function FlightDetailCard({
         {/* Flight route with visual indicator */}
         <View style={styles.routeContainer}>
           <View style={styles.routeEndpoint}>
-            <Text style={styles.airportCode}>{flight.departureAirport?.code || "???"}</Text>
             <Text style={styles.cityName}>{flight.departureAirport?.city || "Origen"}</Text>
           </View>
           
@@ -129,7 +128,6 @@ export default function FlightDetailCard({
           </View>
           
           <View style={styles.routeEndpoint}>
-            <Text style={styles.airportCode}>{flight.destinationAirport?.code || "???"}</Text>
             <Text style={styles.cityName}>{flight.destinationAirport?.city || "Destino"}</Text>
           </View>
         </View>
