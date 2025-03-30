@@ -13,6 +13,7 @@ type Reservation = {
     airline: string;
     departureAirport: { name: string };
     destinationAirport: { name: string };
+    image_url:string;
   };
   reservation_date: string;
   passenger_count: number;

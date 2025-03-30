@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Modal, TextInput, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, TextInput, Alert, StyleSheet, Image, ImageBackground } from 'react-native';
 import { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors from "../constants/Colors";
@@ -11,6 +11,7 @@ type Reservation = {
     airline: string;
     departureAirport: { name: string };
     destinationAirport: { name: string };
+    image_url: string;
   };
   reservation_date: string;
   passenger_count: number;
@@ -84,7 +85,13 @@ const ReservationItem: React.FC<Props> = ({ reservation, onUpdate }) => {
   return (
     <View style={styles.card}>
       <View style={styles.cardBanner}>
-        <View style={styles.overlay} />
+        <View style={styles.overlay}>
+          <ImageBackground 
+            source={{ uri: reservation.flight.image_url }}
+            style={styles.bannerImage}
+            resizeMode='cover'
+          />
+        </View>
 
         <View style={styles.bannerContent}>
           <View style={styles.bannerHeader}>
@@ -184,8 +191,6 @@ const ReservationItem: React.FC<Props> = ({ reservation, onUpdate }) => {
   );
 };
 
-// (Los estilos se mantienen sin modificaciones, solo ya no se usa el estilo `bannerImage`)
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.tertiaryflightcard,
@@ -209,7 +214,6 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   bannerContent: {
     padding: 16,
@@ -224,10 +228,11 @@ const styles = StyleSheet.create({
   airlineContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent:'space-between'
   },
   airlineName: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
     marginRight: 8,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
@@ -259,7 +264,7 @@ const styles = StyleSheet.create({
   },
   bannerCity: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: -1, height: 1 },
