@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import FlightsScreen from '@/app/(tabs)/flights';
 import StatsScreen from '@/app/(tabs)/stats';
 import ChatbotScreen from '@/app/(tabs)/chatbot';
-import ReservationScreen from '@/app/(tabs)/reservation';
+import Reservations from '@/app/(tabs)/reservation';
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -27,23 +27,19 @@ function CustomHeader() {
   );
 }
 
-// 🔽 Pantalla protegida para reservas
-function AuthenticatedReservation() {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkAuth = async () => {
-      const token = await AsyncStorage.getItem('authToken');
-      setIsAuthenticated(!!token);
-    };
-    checkAuth();
-  }, []);
-
-  return isAuthenticated ? <ReservationScreen /> : null;
-}
-
 // 🔽 Definimos las pestañas inferiores
 function BottomTabs() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem("authToken");
+      setIsAuthenticated(!!token);
+    };
+
+    const interval = setInterval(checkAuth, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
   return (
     <Tab.Navigator
       screenOptions={{
@@ -79,25 +75,38 @@ function BottomTabs() {
           ),
         }}
       />
-      <Tab.Screen
-        name="Reservation"
-        component={AuthenticatedReservation}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="calendar-check" size={24} color={color} />
-          ),
-        }}
-      />
+      {isAuthenticated && (
+        <Tab.Screen
+          name="reservation"
+          component={Reservations}
+          options={{
+            title: 'Reservations',
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="calendar-check" size={24} color={color} />
+            ),
+          }}
+        />
+      )}
     </Tab.Navigator>
   );
 }
 
 // 🔽 Definimos el Drawer con la navegación lateral
 export default function Layout() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem("authToken");
+      setIsAuthenticated(!!token);
+    };
+
+    const interval = setInterval(checkAuth, 1000);
+    return () => clearInterval(interval); 
+  }, []);
   return (
     <Drawer.Navigator
       screenOptions={{
-        headerLeft: () => <CustomHeader />, // Agrega el botón del menú en el header
+        headerLeft: () => <CustomHeader />,
       }}
     >
       {/* Pantalla principal con Bottom Tabs dentro del Drawer */}
@@ -105,7 +114,7 @@ export default function Layout() {
       <Drawer.Screen name="Flights" component={FlightsScreen} options={{ title: 'Vuelos' }} />
       <Drawer.Screen name="Stats" component={StatsScreen} options={{ title: 'Estadísticas' }} />
       <Drawer.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'Chatbot' }} />
-      <Drawer.Screen name="Reservation" component={AuthenticatedReservation} options={{ title: 'Reservas' }} />
+      {isAuthenticated && <Drawer.Screen name="Reservation" component={Reservations} options={{ title: 'Reservas' }} />}
     </Drawer.Navigator>
   );
 }
