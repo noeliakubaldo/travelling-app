@@ -10,6 +10,7 @@ import FlightsScreen from '@/app/(tabs)/flights';
 import StatsScreen from '@/app/(tabs)/stats';
 import ChatbotScreen from '@/app/(tabs)/chatbot';
 import Reservations from '@/app/(tabs)/reservation';
+import AiChat from '@/app/(tabs)/aichat';
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -75,6 +76,15 @@ function BottomTabs() {
           ),
         }}
       />
+      <Tab.Screen
+        name="AiChat"
+        component={AiChat}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="robot" size={24} color={color} />
+          ),
+        }}
+      />
       {isAuthenticated && (
         <Tab.Screen
           name="reservation"
@@ -114,6 +124,7 @@ export default function Layout() {
       <Drawer.Screen name="Flights" component={FlightsScreen} options={{ title: 'Vuelos' }} />
       <Drawer.Screen name="Stats" component={StatsScreen} options={{ title: 'Estadísticas' }} />
       <Drawer.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'Chatbot' }} />
+      <Drawer.Screen name="AiChat" component={AiChat} options={{ title: 'AiChat' }} />
       {isAuthenticated && <Drawer.Screen name="Reservation" component={Reservations} options={{ title: 'Reservas' }} />}
     </Drawer.Navigator>
   );
