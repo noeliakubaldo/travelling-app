@@ -4,6 +4,7 @@ import { BarChart, PieChart } from "react-native-chart-kit";
 import CustomText from '@/components/CustomText';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { API_URL } from '@env';
 
 type FlightStats = {
   airport_name: string;
@@ -12,10 +13,11 @@ type FlightStats = {
 };
 
 const StatsScreen = () => {
+  const stats_url = `${API_URL}/stats/flight-counts`;
   const [flightData, setFlightData] = useState<FlightStats[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/stats/flight-counts")
+    fetch(stats_url)
       .then((response) => response.json())
       .then((data) => setFlightData(data))
       .catch((error) => console.error("Error fetching flight data:", error));

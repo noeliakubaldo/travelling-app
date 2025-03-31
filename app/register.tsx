@@ -9,8 +9,10 @@ import {
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import CustomText from '@/components/CustomText';
+import { API_URL } from '@env';
 
 export default function RegisterScreen() {
+  const register_url = `${API_URL}/stats/auth/register`;
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
@@ -24,7 +26,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
+      const response = await fetch(register_url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

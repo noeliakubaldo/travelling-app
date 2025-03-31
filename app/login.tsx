@@ -3,15 +3,17 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import CustomText from '@/components/CustomText';
+import { API_URL } from '@env';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const login_url = `${API_URL}/auth/login`;
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(login_url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

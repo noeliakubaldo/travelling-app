@@ -10,6 +10,7 @@ import {
   Image,
   SafeAreaView,
 } from "react-native";
+import { API_URL } from '@env';
 import { useRouter } from "expo-router";
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,8 +27,7 @@ export default function FlightsScreen() {
   const [error, setError] = useState("");
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [isLoggedIn, setIsLoggedIn] = useState(false);  // Estado para verificar si está logueado
-
-  const API_URL = "http://localhost:3000/api/flights";
+  const flights_url = `${API_URL}/flights`;
 
   const numColumns = useMemo(() => {
     if (screenWidth < 600) return 2;
@@ -51,7 +51,7 @@ export default function FlightsScreen() {
     async function fetchFlights() {
       setLoading(true);
       try {
-        const response = await fetch(API_URL);
+        const response = await fetch(flights_url);
         const data = await response.json();
         setFlights(data);
       } catch (err) {

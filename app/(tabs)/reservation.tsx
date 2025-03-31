@@ -4,8 +4,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReservationItem from '../../components/ReservationItem';
 import Colors from "../../constants/Colors";
-
-const API_URL = 'http://localhost:3000/api/reservations';
+import { API_URL } from '@env';
 
 type Reservation = {
   id: number;
@@ -22,6 +21,7 @@ type Reservation = {
 };
 
 export default function Reservations() {
+  const reservations_url = `${API_URL}/reservations`;
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -37,7 +37,7 @@ export default function Reservations() {
         return;
       }
 
-      const response = await fetch(API_URL, {
+      const response = await fetch(reservations_url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data: Reservation[] = await response.json();

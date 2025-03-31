@@ -3,6 +3,7 @@ import { TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator, View, Dim
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors from '@/constants/Colors';
+import { API_URL } from '@env';
 
 type BookingButtonProps = {
   flight: {
@@ -25,6 +26,8 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
 }) => {
   const router = useRouter();
   const [isBooking, setIsBooking] = useState(false);
+
+  const reservation_detail_url = `${API_URL}/api/reservations`;
 
   const handleBookFlight = async () => {
     // Optional pre-booking callback
@@ -60,7 +63,7 @@ export const BookingButton: React.FC<BookingButtonProps> = ({
         status: "pendiente"
       };
 
-      const response = await fetch('http://localhost:3000/api/reservations', {
+      const response = await fetch(reservation_detail_url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
