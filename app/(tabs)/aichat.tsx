@@ -16,20 +16,22 @@ const AiChat = () => {
 
     const newMessage = { role: 'user', text: input };
     const updatedMessages = [...messages, newMessage];
-
     setMessages(updatedMessages);
     setInput('');
 
     try {
       const response = await axios.post(API_URL, {
-        contents: updatedMessages.map((msg) => ({ role: msg.role, parts: [{ text: msg.text }] })),
+        contents: updatedMessages.map((msg) => ({
+          role: msg.role === "user" ? "user" : "model", // Gemini usa "user" y "model"
+          parts: [{ text: msg.text }],
+        })),
       });
 
-      const replyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No se obtuvo respuesta.';
-      setMessages([...updatedMessages, { role: 'gemini', text: replyText }]);
+      const replyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "No se obtuvo respuesta.";
+      setMessages((prevMessages) => [...prevMessages, { role: "gemini", text: replyText }]);
     } catch (error) {
-      console.error('Error en la API:', error);
-      setMessages([...updatedMessages, { role: 'gemini', text: 'Hubo un error al obtener la respuesta.' }]);
+      console.error("Error en la API:", error);
+      setMessages((prevMessages) => [...prevMessages, { role: "gemini", text: "Hubo un error al obtener la respuesta." }]);
     }
   };
 
